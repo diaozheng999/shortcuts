@@ -98,6 +98,7 @@ def save_image(file, d, wd):
     save_image_with_paths(img_file, movie_file, mp_file, xmp_file)
     push_to_device(mp_file)
 
+
 def save_image_with_paths(img_file, movie_file, mp_file, xmp_file):
     shutil.copyfile(img_file, mp_file)
 
@@ -107,7 +108,8 @@ def save_image_with_paths(img_file, movie_file, mp_file, xmp_file):
         f.write(metadata)
 
     # attach XMP to the file
-    subprocess.run(["exiftool", "-xmp<={}".format(xmp_file), mp_file], stdout=subprocess.DEVNULL)
+    subprocess.run(["exiftool", "-xmp<={}".format(xmp_file),
+                   mp_file], stdout=subprocess.DEVNULL)
 
     # For iPhone photos, the mdat box is the last box, and is set
     # to the size 1. Since we're appending another box to the end,
@@ -146,8 +148,9 @@ def save_image_with_paths(img_file, movie_file, mp_file, xmp_file):
                 b = mov.read(buffer_size)
                 img.write(b)
 
+
 def push_to_device(mp_file):
-    # push file to Pixel device
+    # push file to Android device
     subprocess.run(["adb", "push", mp_file, "/sdcard/DCIM/Camera"])
 
 
