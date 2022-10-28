@@ -14,6 +14,11 @@ Requires the following python packages
 This file is meant to be run with command line access to the iPhone storage
 in either Windows or Linux. For Mac, you can sync up the photos with Photos.app
 and use `photo_sync.py` to copy the photos that way.
+
+Usage:
+
+python3 ./motion_photo.py /path/to/photos
+
 """
 
 import os
