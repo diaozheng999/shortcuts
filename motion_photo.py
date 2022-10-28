@@ -28,7 +28,7 @@ def get_file_with_movie(name, d, wd):
     (names, ext) = name.rsplit(".", 1)
     img_file = d + names + '.' + ext
     mov_file = d + names + '.mov'
-    mp_file = wd + names + '.MP.HEIC'
+    mp_file = wd + names + '.' + ext
     xmp_file = wd + names + '.xmp'
 
     return img_file, mov_file, mp_file, xmp_file
