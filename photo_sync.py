@@ -47,7 +47,7 @@ class Photo(object):
     def __init__(self, pk, subtype, filename, uuid, originalFilename, exported):
         self.pk = pk                            # photo primary key
         self.uuid = uuid                        # photo UUID
-        self.update_filename(originalFilename)
+        self.update_filename(originalFilename or filename)
         self.ext = filename.split(".")[1]       # extension. either `jpeg` or `heic`
         self.decide_kind(subtype)
         self.exported = exported                # whether file has already been exported
@@ -183,6 +183,7 @@ def get_photos_to_upload(cur):
     photos = []
 
     for row in res.fetchall():
+        print(row)
         photos.append(Photo(*row))
 
     return photos
