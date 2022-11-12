@@ -1,5 +1,5 @@
 from heif.MediaFile import MediaFile
-from heif.content import Content
+from heif.content import Content, XMPChunk
 from heif.meta import META
 
 
@@ -26,4 +26,25 @@ class HeifFile(MediaFile):
         self.items = items
 
         return self
+        
+    def describe_for_motion_photo(self):
+        print("Describing HEIF file for Motion Photo")
+        print("=====================================")
+        print("Scanning %d iinf box(es)..."%(self.meta.iinf.count))
+        
+        mime_ids = []
+
+        for infe in self.meta.iinf:
+            if infe.inf == 'mime':
+                print(infe)
+                mime_ids.append(infe.id)
+
+        print("found %d XMP chunk(s). %r"%(len(mime_ids), mime_ids))
+        
+        print("Scanning %d content chunk(s)..."%(len(self.content.chunks)))
+
+        for chunk in self.content.chunks:
+            if isinstance(chunk, XMPChunk):
+                print(chunk)
+                print(chunk.contents_as_string())
         

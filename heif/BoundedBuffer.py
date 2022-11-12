@@ -101,6 +101,12 @@ class BoundedBuffer(object):
         else:
             return self.offset
 
+    def root(self):
+        if isinstance(self.parent, BoundedBuffer):
+            return self.parent.root()
+        else:
+            return self
+
     def offs(self, offset):
         return self.absolute_offset() + offset
 

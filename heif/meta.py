@@ -36,8 +36,14 @@ class IINF(FullAtom):
     def _read_entries(self):
         self._entries = [x.cast_to(INFE)
                          for x in BoxList(self.contents(), 2).cache]
+
+        self._by_id = {}
+
         if len(self._entries) != self.count:
             raise Exception("Invalid IINF box")
+
+        for entry in self._entries:
+            self._by_id[entry.id] = entry
 
     def __iter__(self):
         return self._entries.__iter__()
@@ -46,6 +52,9 @@ class IINF(FullAtom):
         for entry in self.entries():
             if entry.inf == kind:
                 return entry.id
+    
+    def find(self, id: int) -> INFE:
+        return self._by_id[id]
 
 
 class ILOCEntry(object):

@@ -9,6 +9,4 @@ from heif.meta import IINF, ILOC, META
 if __name__ == "__main__":
     file = os.path.expanduser(sys.argv[1])
     with HeifFile(file) as f:
-        for i in f.meta.iloc:
-            print(i)
-
+        f.describe_for_motion_photo()
