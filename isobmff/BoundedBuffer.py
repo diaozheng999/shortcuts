@@ -207,7 +207,6 @@ class BoundedBuffer(object):
         span = self._span
         self._span = []
 
-        print(">> write: heres")
         for i in span:
             if self._size(i) > 0:
                 self._span.append(i)

@@ -10,5 +10,4 @@ from qt.QuickTimeFile import QuickTimeFile
 if __name__ == "__main__":
     file = os.path.expanduser(sys.argv[1])
     with QuickTimeFile(file) as f:
-        for box in f.items:
-            print(box)
+        print(f.moov.mvhd)
