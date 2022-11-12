@@ -1,7 +1,7 @@
 import os
-from heif.BoundedBuffer import BoundedBuffer
-from heif.Box import Box
-from heif.BoxList import BoxList
+from isobmff.BoundedBuffer import BoundedBuffer
+from isobmff.Box import Box
+from isobmff.BoxList import BoxList
 
 
 class MediaFile(BoundedBuffer):

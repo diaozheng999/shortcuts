@@ -2,11 +2,13 @@ import os
 import sys
 from heif.HeifFile import HeifFile
 
-from heif.MediaFile import MediaFile
-from heif.BoxList import BoxList
+from isobmff.MediaFile import MediaFile
+from isobmff.BoxList import BoxList
 from heif.meta import IINF, ILOC, META
+from qt.QuickTimeFile import QuickTimeFile
 
 if __name__ == "__main__":
     file = os.path.expanduser(sys.argv[1])
-    with HeifFile(file) as f:
-        f.describe_for_motion_photo()
+    with QuickTimeFile(file) as f:
+        for box in f.items:
+            print(box)

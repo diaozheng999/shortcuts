@@ -1,6 +1,6 @@
-from heif.Box import FullAtom
-from heif.BoundedBuffer import BoundedBuffer
-from heif.BoxList import BoxList
+from isobmff.Box import FullAtom
+from isobmff.BoundedBuffer import BoundedBuffer
+from isobmff.BoxList import BoxList
 
 
 class INFE(FullAtom):
@@ -49,10 +49,10 @@ class IINF(FullAtom):
         return self._entries.__iter__()
 
     def first_id_of_kind(self, kind: str):
-        for entry in self.entries():
+        for entry in self._entries:
             if entry.inf == kind:
                 return entry.id
-    
+
     def find(self, id: int) -> INFE:
         return self._by_id[id]
 
@@ -60,8 +60,12 @@ class IINF(FullAtom):
 class ILOCEntry(object):
     size = 16
 
+    OFFSET_CONTENT_START = 8
+    OFFSET_CONTENT_SIZE = 12
+
     def __init__(self, buffer: BoundedBuffer):
         self.buffer = buffer
+        self.offset = buffer.current_position()
         self.id = buffer.read_int16_be()
         self.reserved = buffer.read_int16_be()
         self.reserved_1 = buffer.read_int32_be()
@@ -71,6 +75,16 @@ class ILOCEntry(object):
     def __repr__(self):
         return "<ILOCEntry id=0x%04x 0x%04x 0x%08x start=0x%08x size=%d>" % (self.id, self.reserved, self.reserved_1, self.content_start, self.content_size)
 
+    def set_content_start(self, n: int):
+        self.buffer.seek(self.offset + ILOCEntry.OFFSET_CONTENT_START)
+        self.buffer.write_int32_be(n)
+        self.content_start = n
+
+    def set_content_size(self, n: int):
+        self.buffer.seek(self.offset + ILOCEntry.OFFSET_CONTENT_SIZE)
+        self.buffer.write_int32_be(n)
+        self.content_size = n
+
 
 class ILOC(FullAtom):
     type = b"iloc"
@@ -79,6 +93,7 @@ class ILOC(FullAtom):
         super().__init__(buffer, offset, ILOC.type)
         self.reserved = self.buffer.read_int16_be()
         self.count = self.buffer.read_int16_be()
+        self._by_id = {}
         self.content_offset += 4
         self._read_entries()
 
@@ -88,9 +103,14 @@ class ILOC(FullAtom):
     def _read_entries(self):
         self._entries = []
         buffer = self.contents()
-        buffer.repeat_relative(lambda: self._entries.append(ILOCEntry(buffer)))
+        buffer.repeat_relative(lambda: self._read_entry(buffer))
         if len(self._entries) != self.count:
             raise Exception("Invalid ILOC box")
+
+    def _read_entry(self, buffer):
+        entry = ILOCEntry(buffer)
+        self._entries.append(entry)
+        self._by_id[entry.id] = entry
 
     def reversed(self):
         return sorted(self._entries, key=lambda x: x.content_start, reverse=True)
@@ -98,6 +118,11 @@ class ILOC(FullAtom):
     def __iter__(self):
         return sorted(self._entries, key=lambda x: x.content_start).__iter__()
 
+    def describe_changes(self):
+        self.contents().describe_changes()
+        
+    def __getitem__(self, id: int) -> ILOCEntry:
+        return self._by_id[id]
 
 class META(FullAtom):
     type = b'meta'

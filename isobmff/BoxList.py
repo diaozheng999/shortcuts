@@ -1,5 +1,5 @@
-from heif.BoundedBuffer import BoundedBuffer
-from heif.Box import Box
+from isobmff.BoundedBuffer import BoundedBuffer
+from isobmff.Box import Box
 
 
 class BoxList(object):

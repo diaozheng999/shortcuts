@@ -1,5 +1,5 @@
 from typing import Union
-from heif.BoundedBuffer import BoundedBuffer
+from isobmff.BoundedBuffer import BoundedBuffer
 
 
 class InvalidType(Exception):
@@ -15,6 +15,7 @@ class Box(object):
         self.content_offset = 8
         self.seek_to_header()
         self.read_header()
+        self._contents = None
 
     def seek_to_header(self):
         self.buffer.seek(self.offset)
@@ -36,7 +37,9 @@ class Box(object):
         self.type = type
 
     def contents(self):
-        return BoundedBuffer(self.buffer, self.offset + self.content_offset, self.size - self.content_offset)
+        if not self._contents:
+            self._contents = BoundedBuffer(self.buffer, self.offset + self.content_offset, self.size - self.content_offset)
+        return self._contents
 
     def cast_to(self, specialised, **kwargs):
         return specialised(self.buffer, self.offset, **kwargs)

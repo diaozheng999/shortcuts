@@ -1,4 +1,4 @@
-from heif.MediaFile import MediaFile
+from isobmff.MediaFile import MediaFile
 from heif.content import Content, XMPChunk
 from heif.meta import META
 
@@ -14,16 +14,15 @@ class HeifFile(MediaFile):
             if item.type == META.type:
                 self.meta = item.cast_to(META)
                 items.append(self.meta)
-                if self.content:
-                    self.content.read(self.meta)
 
             elif item.type == Content.type:
-                self.content = item.cast_to(Content, meta=self.meta)
+                self.content = item.cast_to(Content)
                 items.append(self.content)
             else:
                 items.append(item)
 
         self.items = items
+        self.content.read(self.meta)
 
         return self
         
@@ -47,4 +46,3 @@ class HeifFile(MediaFile):
             if isinstance(chunk, XMPChunk):
                 print(chunk)
                 print(chunk.contents_as_string())
-        
