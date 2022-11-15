@@ -122,7 +122,7 @@ class BoundedBuffer(object):
         return self.read_int_be(8)
 
     def write_int64_be(self, n: int):
-        return self.write_int64_be(n, 8)
+        return self.write_int_be(n, 8)
 
     def absolute_offset(self) -> int:
         if self.__memo_cached_abs_offset == None:
@@ -180,14 +180,20 @@ class BoundedBuffer(object):
             self._span[i] = span[:offs - start]
 
     def _slice_trailing(self, offs: int, i: int, start: int, size: int, span: Union[Tuple[int, int], bytes]):
-        if type(span) == tuple:
-            self._span[i] = (offs - start, size - (offs - start))
+        if offs == start:
+            # edge case, the trailing is actually exactly at the point of the
+            # next buffer, so no trimming is necessary
+            pass
+        elif type(span) == tuple:
+            self._span[i] = (offs, size - (offs - start))
         elif isinstance(span, BoundedBuffer):
             raise UnownedBuffer("Content is not owned by this buffer!")
         else:
             self._span[i] = span[offs - start:]
 
     def _write(self, offs: int, size: int, content):
+        self._sanity_check()
+
         start = self._idx(offs)
         end = self._idx(offs + size)
 
@@ -210,8 +216,17 @@ class BoundedBuffer(object):
         for i in span:
             if self._size(i) > 0:
                 self._span.append(i)
-            else:
-                print(">> filter off zero-sized slice")
+
+        self._sanity_check(start, end)
+
+    def _sanity_check(self, *args):
+        i = 0
+        for span in self._span:
+            if type(span) == tuple:
+                if span[0] < i:
+                    print(args)
+                    raise AssertionError("Value should be strictly increasing")
+                i = span[0] + span[1]
 
     def write(self, size: int, content: bytes):
         self._write(self._ptr, size, content)
@@ -239,3 +254,29 @@ class BoundedBuffer(object):
                 i.describe_changes(indent + 4)
             else:
                 self._print(indent, "  - len=%8d  binary %r" % (len(i), i))
+
+    def _commit_span(self, file, span,  dry_run=False, indent=0):
+        if type(span) == tuple:
+            (start, size) = span
+            if dry_run:
+                self._print(indent, "  - len=%8d  underlying buffer from 0x%08x to 0x%08x" %
+                            (size, self.offs(start), self.offs(start + size)))
+            else:
+                self.seek(start)
+                contents = self.read(size)
+                file.write(contents)
+        elif isinstance(span, BoundedBuffer):
+            if dry_run:
+                self._print(
+                    indent, "  - len=%8d  controlled by child buffer" % (span.size, ))
+            span.commit(file, dry_run, indent + 4)
+        else:
+            if dry_run:
+                self._print(indent, "  - len=%8d  binary %r" %
+                            (len(span), span))
+            else:
+                file.write(span)
+
+    def commit(self, file, dry_run=False, indent=0):
+        for span in self._span:
+            self._commit_span(file, span, dry_run, indent)

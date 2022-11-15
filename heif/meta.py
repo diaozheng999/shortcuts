@@ -77,13 +77,21 @@ class ILOCEntry(object):
 
     def set_content_start(self, n: int):
         self.buffer.seek(self.offset + ILOCEntry.OFFSET_CONTENT_START)
+        self.buffer.seek(self.offset + ILOCEntry.OFFSET_CONTENT_START)
         self.buffer.write_int32_be(n)
         self.content_start = n
+        # print(self.buffer.describe_changes())
+        # exit()
 
     def set_content_size(self, n: int):
+        # print("set_content_size for 0x%04x"%(self.id), n,)
+        # print("previous size", self.content_size)
+        self.buffer.seek(self.offset + ILOCEntry.OFFSET_CONTENT_SIZE)
+        # print(self.buffer.read_int32_be(), self.content_size)
         self.buffer.seek(self.offset + ILOCEntry.OFFSET_CONTENT_SIZE)
         self.buffer.write_int32_be(n)
         self.content_size = n
+        # print(self.buffer.describe_changes())
 
 
 class ILOC(FullAtom):

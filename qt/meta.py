@@ -22,6 +22,12 @@ class MVHD(FullAtom):
         self.selection_duration = self.buffer.read_int32_be()
         self.current_time = self.buffer.read_int32_be()
         self.next_track_id = self.buffer.read_int32_be()
+    
+    def duration_in_s(self):
+        return self.duration / self.time_scale
+
+    def duration_in_us(self):
+        return round(self.duration_in_s() * 1000000)
 
 class MOOV(Box):
     type = b'moov'
