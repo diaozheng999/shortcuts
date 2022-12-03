@@ -1,3 +1,4 @@
+from typing import List
 from isobmff.Box import FullAtom
 from isobmff.BoundedBuffer import BoundedBuffer
 from isobmff.BoxList import BoxList
@@ -52,6 +53,15 @@ class IINF(FullAtom):
         for entry in self._entries:
             if entry.inf == kind:
                 return entry.id
+
+    def id_of_kind(self, kind: str) -> List[int]:
+        results = []
+
+        for entry in self._entries:
+            if entry.inf == kind:
+                results.append(entry.id)
+
+        return results
 
     def find(self, id: int) -> INFE:
         return self._by_id[id]

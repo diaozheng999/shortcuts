@@ -47,9 +47,9 @@ class Photo(object):
     def __init__(self, pk, subtype, filename, uuid, originalFilename, exported):
         self.pk = pk                            # photo primary key
         self.uuid = uuid                        # photo UUID
+        self.decide_kind(subtype)
         self.update_filename(originalFilename or filename)
         self.ext = filename.split(".")[1]       # extension. either `jpeg` or `heic`
-        self.decide_kind(subtype)
         self.exported = exported                # whether file has already been exported
         self.update_original(filename)
         self.copied_to_output = False           # whether file has been processed
@@ -90,6 +90,9 @@ class Photo(object):
                 ext
             )
         Photo.filenames[name] += 1
+        if self.subtype == 'live_photo':
+            (name, ext) = self.filename.rsplit('.')
+            self.filename = "{}.MP.{}".format(name, ext)
 
     def update_original(self, filename):
         """
@@ -107,7 +110,7 @@ class Photo(object):
             self.movie_path = path(
                 "/originals/{}/{}_3.mov".format(filename[0], self.uuid))
 
-    def copy_to_output(self, output_folder):
+    def copy_to_output(self, output_folder, convert_to_jpeg=False):
         """
         Process the photo to store to the Android device's camera roll.
 
@@ -122,9 +125,15 @@ class Photo(object):
             shutil.copyfile(self.original, output)
             self.copied_to_output = True
         elif self.ext != "heic":
-            # TODO: support JPEG live photos, should behave similar
-            # to GCamera output.
-            print("JPEG Live Photos are not supported yet")
+            xmp_file = output_folder + self.uuid + ".xmp"
+            motion_photo.save_image_with_paths(
+                self.original,
+                self.movie_path,
+                output,
+                xmp_file,
+                jpeg=True
+            )
+            self.copied_to_output = True
         else:
             xmp_file = output_folder + self.uuid + ".xmp"
             motion_photo.save_image_with_paths(
