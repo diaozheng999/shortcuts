@@ -70,6 +70,8 @@ class Photo(object):
             self.subtype = 'slow_mo'
         elif subtype == 102:
             self.subtype = 'timelapse'
+        else:
+            self.subtype = None
 
     def update_filename(self, originalFilename):
         """
@@ -79,6 +81,9 @@ class Photo(object):
 
         # set filename here
         name = originalFilename.lower()
+        (name_wo_ext, ext) = originalFilename.split(".")
+        self.name_wo_ext = name_wo_ext
+        self.dest_ext = ext
         if name not in Photo.filenames:
             self.filename = originalFilename
             Photo.filenames[name] = 0
@@ -103,7 +108,7 @@ class Photo(object):
         `<pkg>/originals/{first letter of UUID}/{UUID}_3.mov`
         """
         self.original = path("/originals/{}/{}".format(filename[0], filename))
-        if (self.subtype == 'live_photo'):
+        if (hasattr(self, "subtype") and self.subtype == 'live_photo'):
             self.movie_path = path(
                 "/originals/{}/{}_3.mov".format(filename[0], self.uuid))
 
@@ -115,6 +120,7 @@ class Photo(object):
         treats it as a motion photo.
         """
         output = output_folder + self.filename
+        print(output, self.subtype, self.ext, self.original, self.uuid, self.pk, self.filename, self.dest_ext)
         self.__output_filename = output
         if self.copied_to_output:
             return
@@ -163,6 +169,45 @@ def setup_connection(conn):
     return cur
 
 
+def get_albums_to_upload(cur):
+    res = cur.execute("""
+    SELECT
+        Z_PK,
+        ZTitle
+    FROM
+        ZGenericAlbum
+    Where ZTitle not null
+    """)
+    for row in res.fetchall():
+        print(row)
+
+def get_photos_to_upload_for_album(cur, album_key):
+    res = cur.execute("""
+    SELECT
+        a.Z_PK,
+        ZKindSubtype,
+        ZFilename,
+        ZUUID,
+        ZOriginalFilename,
+        EXPORTED
+    FROM
+        ZAsset a
+        LEFT JOIN ZAdditionalAssetAttributes aa on aa.ZAsset = a.Z_PK
+        LEFT JOIN ext_google_photo_export e on e.PK = a.Z_PK
+        LEFT JOIN Z_28Assets lookup on lookup.Z_3Assets = a.Z_PK
+    WHERE
+        EXPORTED is null
+        AND lookup.Z_28Albums = %s
+    """%(album_key))
+
+    photos = []
+
+    for row in res.fetchall():
+        print(row)
+        photos.append(Photo(*row))
+
+    return photos
+
 def get_photos_to_upload(cur):
     res = cur.execute("""
     SELECT
@@ -174,7 +219,7 @@ def get_photos_to_upload(cur):
         EXPORTED
     FROM
         ZAsset a
-        LEFT JOIN ZAdditionalAssetAttributes aa on aa.Z_PK = a.Z_PK
+        LEFT JOIN ZAdditionalAssetAttributes aa on aa.ZAsset = a.Z_PK
         LEFT JOIN ext_google_photo_export e on e.PK = a.Z_PK
     WHERE
         EXPORTED is null
@@ -188,17 +233,7 @@ def get_photos_to_upload(cur):
 
     return photos
 
-
-if __name__ == "__main__":
-    conn = sqlite3.connect(path('/database/Photos.sqlite'))
-    cur = setup_connection(conn)
-
-    output = "out/"
-
-    if not os.path.exists(output):
-        os.mkdir(output)
-
-    photos = get_photos_to_upload(cur)
+def upload_photos(photos):
     count = 0
 
     for photo in tqdm(photos):
@@ -211,3 +246,31 @@ if __name__ == "__main__":
     print("exporting file to device...")
     for photo in photos:
         photo.push_to_device(cur, conn)
+
+if __name__ == "__main__":
+    import sys
+    p = path('/database/Photos.sqlite')
+    print(p)
+    conn = sqlite3.connect(p)
+    cur = setup_connection(conn)
+
+    output = "out/"
+
+    if not os.path.exists(output):
+        os.mkdir(output)
+
+
+    if ('--album' in sys.argv):
+        get_albums_to_upload(cur)
+
+        if len(sys.argv) > 2:
+            album_id = sys.argv[2]
+            photos = get_photos_to_upload_for_album(cur, album_id)
+
+            upload_photos(photos)
+
+        exit(0)
+
+    else:
+        photos = get_photos_to_upload(cur)
+        upload_photos(photos)
