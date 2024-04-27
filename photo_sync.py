@@ -151,6 +151,11 @@ class Photo(object):
         subprocess.run(["adb", "shell", "am", "broadcast",
                         "-a", "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
                         "-d", "file:///sdcard/DCIM/Camera/{}".format(self.filename)])
+        
+        # Seems that Pixel 2 XL doesn't seem to like the `file://` prefix
+        subprocess.run(["adb", "shell", "am", "broadcast",
+                        "-a", "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
+                        "-d", "/sdcard/DCIM/Camera/{}".format(self.filename)])
         cursor.execute("""
         INSERT INTO ext_google_photo_export (PK, EXPORTED) values ({}, 1)
         """.format(self.pk))
