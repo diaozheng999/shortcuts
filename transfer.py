@@ -10,6 +10,10 @@ def transfer_file(folder, file_name):
     subprocess.run(["adb", "shell", "am", "broadcast",
                     "-a", "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
                     "-d", "file:///sdcard/DCIM/Camera/{}".format(file_name)])
+    # Pixel 2 XL file location
+    subprocess.run(["adb", "shell", "am", "broadcast",
+                    "-a", "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
+                    "-d", "file:///storage/emulated/0/DCIM/Camera/{}".format(file_name)])
 
 def transfer_all(folder):
     for file_name in tqdm(os.listdir(folder)):
