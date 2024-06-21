@@ -199,10 +199,10 @@ def get_photos_to_upload_for_album(cur, album_key):
         ZAsset a
         LEFT JOIN ZAdditionalAssetAttributes aa on aa.ZAsset = a.Z_PK
         LEFT JOIN ext_google_photo_export e on e.PK = a.Z_PK
-        LEFT JOIN Z_28Assets lookup on lookup.Z_3Assets = a.Z_PK
+        LEFT JOIN Z_29Assets lookup on lookup.Z_3Assets = a.Z_PK
     WHERE
         EXPORTED is null
-        AND lookup.Z_28Albums = %s
+        AND lookup.Z_29Albums = %s
     """%(album_key))
 
     photos = []
